@@ -424,7 +424,7 @@
         .then(res => res.json())
         .then(data => {
             if(data.status === "success") {
-                alert("🎉 " + data.message + "\n您已順利完成本次決策模擬任務！");
+                alert("🎉 " + data.message + "\n交卷成功！老師已經收到你的答案了");
                 document.querySelector('.btn-success').disabled = true;
                 document.querySelector('.btn-success').innerText = "已交卷";
             }
