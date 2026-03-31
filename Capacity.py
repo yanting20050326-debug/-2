@@ -134,32 +134,37 @@ def decision_api():
 @app.route('/api/submit', methods=['POST'])
 def submit_answer():
     data = request.json
-    file_name = 'decision_answers.csv'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    file_name = os.path.join(BASE_DIR, 'decision_answers.csv')
     file_exists = os.path.isfile(file_name)
     
     with open(file_name, mode='a', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         if not file_exists:
-            # 擴展表頭以符合兩階段問題
             writer.writerow(['交卷時間', '班級', '學號', '姓名', 'Q1_未知機率下選擇', '選擇的決策準則', 'Q2_AI引導式提問', 'Q2_學生回答'])
         
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 設定台灣時區 (UTC+8)
+        tw_tz = datetime.timezone(datetime.timedelta(hours=8))
+        timestamp = datetime.datetime.now(tw_tz).strftime("%Y-%m-%d %H:%M:%S")
+        
         writer.writerow([
             timestamp, 
             data.get('studentClass', ''), 
             data.get('studentId', ''), 
             data.get('studentName', ''), 
-            data.get('q1Answer', ''),         # 第一題的選擇 (例如: 建大廠)
-            data.get('criterionUsed', ''),    # 最後使用的決策準則
-            data.get('aiQuestion', ''),       # 記錄當下AI問了什麼問題
-            data.get('q2Answer', '')          # 第二題學生的回答
+            data.get('q1Answer', ''),         
+            data.get('criterionUsed', ''),    
+            data.get('aiQuestion', ''),       
+            data.get('q2Answer', '')          
         ])
         
     return jsonify({"status": "success", "message": "儲存成功！"})
 
 @app.route('/admin')
 def admin_view():
-    file_name = 'decision_answers.csv'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    file_name = os.path.join(BASE_DIR, 'decision_answers.csv')
+    
     if not os.path.isfile(file_name): return "<h2>還沒有學生提交喔！</h2>"
     html = "<html><head><meta charset='utf-8'><style>body{font-family:Arial;margin:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}th{background:#28a745;color:white}</style></head><body><h2>👨‍🏫 老師專用後台</h2><table>"
     with open(file_name, mode='r', encoding='utf-8-sig') as f:
