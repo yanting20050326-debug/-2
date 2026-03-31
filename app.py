@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify, render_template
-import csv
 import os
 import datetime
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
@@ -133,21 +134,28 @@ def decision_api():
 
 @app.route('/api/submit', methods=['POST'])
 def submit_answer():
-    data = request.json
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    file_name = os.path.join(BASE_DIR, 'decision_answers.csv')
-    file_exists = os.path.isfile(file_name)
-    
-    with open(file_name, mode='a', newline='', encoding='utf-8-sig') as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow(['交卷時間', '班級', '學號', '姓名', 'Q1_未知機率下選擇', '選擇的決策準則', 'Q2_AI引導式提問', 'Q2_學生回答'])
+    try:
+        data = request.json
         
-        # 設定台灣時區 (UTC+8)
+        # 1. 設定 Google 授權範圍
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        
+        # 2. 讀取金鑰 (確認檔案名稱是 credentials.json)
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        creds_path = os.path.join(BASE_DIR, 'credentials.json')
+        creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
+        client = gspread.authorize(creds)
+        
+        # 3. 開啟雲端試算表 (⚠️ 請把下方網址換成你的試算表網址)
+        # 例如: sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1A2B3C...").sheet1
+        sheet = client.open_by_url("capacity@capacity-491908.iam.gserviceaccount.com").sheet1
+        
+        # 4. 取得台灣時間
         tw_tz = datetime.timezone(datetime.timedelta(hours=8))
         timestamp = datetime.datetime.now(tw_tz).strftime("%Y-%m-%d %H:%M:%S")
         
-        writer.writerow([
+        # 5. 準備寫入的資料
+        row_data = [
             timestamp, 
             data.get('studentClass', ''), 
             data.get('studentId', ''), 
@@ -156,19 +164,21 @@ def submit_answer():
             data.get('criterionUsed', ''),    
             data.get('aiQuestion', ''),       
             data.get('q2Answer', '')          
-        ])
+        ]
         
-    return jsonify({"status": "success", "message": "儲存成功！"})
+        # 6. 將資料新增到試算表的最後一行
+        sheet.append_row(row_data)
+        
+        return jsonify({"status": "success", "message": "已成功儲存至 Google 雲端！"})
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"status": "error", "message": "儲存失敗，請聯繫老師。"}), 500
 
+# 因為資料已經存在 Google，Render 就不需要後台網頁了，直接回傳提示即可
 @app.route('/admin')
 def admin_view():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    file_name = os.path.join(BASE_DIR, 'decision_answers.csv')
-    
-    if not os.path.isfile(file_name): return "<h2>還沒有學生提交喔！</h2>"
-    html = "<html><head><meta charset='utf-8'><style>body{font-family:Arial;margin:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}th{background:#28a745;color:white}</style></head><body><h2>👨‍🏫 老師專用後台</h2><table>"
-    with open(file_name, mode='r', encoding='utf-8-sig') as f:
-        for i, row in enumerate(csv.reader(f)):
-            html += f"<tr>{''.join(f'<th>{c}</th>' if i==0 else f'<td>{c}</td>' for c in row)}</tr>"
-    return html + "</table></body></html>"
-    
+    return "<h2>資料已全數轉移至 Google 雲端試算表，請直接開啟試算表查看成績！</h2>"
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
