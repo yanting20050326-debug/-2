@@ -141,10 +141,8 @@ def submit_answer():
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
         # 2. 讀取金鑰 (雙向通用寫法)
-        # 優先去 Render 的雲端保險箱找鑰匙
         creds_path = '/etc/secrets/credentials.json'
         
-        # 如果找不到 (代表你現在是在自己電腦上按執行測試)，就找檔案旁邊的鑰匙
         if not os.path.exists(creds_path):
             BASE_DIR = os.path.dirname(os.path.abspath(__file__))
             creds_path = os.path.join(BASE_DIR, 'credentials.json')
@@ -152,8 +150,7 @@ def submit_answer():
         creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
         client = gspread.authorize(creds)
         
-        # 3. 開啟雲端試算表 (⚠️ 請把下方網址換成你的試算表網址)
-        # 例如: sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1A2B3C...").sheet1
+        # 3. 開啟雲端試算表
         sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1Ioq-W8woOPfoZf60r4hAiuNI1iGGMr_M36f48fw1kUw/edit?gid=0#gid=0").sheet1
         
         # 4. 取得台灣時間
@@ -181,7 +178,6 @@ def submit_answer():
         print(f"Error: {e}")
         return jsonify({"status": "error", "message": "儲存失敗，請聯繫老師。"}), 500
 
-# 因為資料已經存在 Google，Render 就不需要後台網頁了，直接回傳提示即可
 @app.route('/admin')
 def admin_view():
     return "<h2>資料已全數轉移至 Google 雲端試算表，請直接開啟試算表查看成績！</h2>"
