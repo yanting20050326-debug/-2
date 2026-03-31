@@ -166,6 +166,4 @@ def admin_view():
         for i, row in enumerate(csv.reader(f)):
             html += f"<tr>{''.join(f'<th>{c}</th>' if i==0 else f'<td>{c}</td>' for c in row)}</tr>"
     return html + "</table></body></html>"
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    
