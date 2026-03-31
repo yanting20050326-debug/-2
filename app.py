@@ -175,7 +175,7 @@ def submit_answer():
         # 6. 將資料新增到試算表的最後一行
         sheet.append_row(row_data)
         
-        return jsonify({"status": "success", "message":"" })
+        return jsonify({"status": "success", "message":""})
     
     except Exception as e:
         print(f"Error: {e}")
