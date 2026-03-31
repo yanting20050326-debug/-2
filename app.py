@@ -154,7 +154,7 @@ def submit_answer():
         
         # 3. 開啟雲端試算表 (⚠️ 請把下方網址換成你的試算表網址)
         # 例如: sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1A2B3C...").sheet1
-        sheet = client.open_by_url("capacity@capacity-491908.iam.gserviceaccount.com").sheet1
+        sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1Ioq-W8woOPfoZf60r4hAiuNI1iGGMr_M36f48fw1kUw/edit?gid=0#gid=0").sheet1
         
         # 4. 取得台灣時間
         tw_tz = datetime.timezone(datetime.timedelta(hours=8))
