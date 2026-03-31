@@ -140,9 +140,15 @@ def submit_answer():
         # 1. 設定 Google 授權範圍
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # 2. 讀取金鑰 (確認檔案名稱是 credentials.json)
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        creds_path = os.path.join(BASE_DIR, 'credentials.json')
+        # 2. 讀取金鑰 (雙向通用寫法)
+        # 優先去 Render 的雲端保險箱找鑰匙
+        creds_path = '/etc/secrets/credentials.json'
+        
+        # 如果找不到 (代表你現在是在自己電腦上按執行測試)，就找檔案旁邊的鑰匙
+        if not os.path.exists(creds_path):
+            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            creds_path = os.path.join(BASE_DIR, 'credentials.json')
+            
         creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
         client = gspread.authorize(creds)
         
